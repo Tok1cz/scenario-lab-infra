@@ -1,6 +1,6 @@
 resource "aws_instance" "app" {
   ami                    = var.ami_id
-  instance_type          = "t3.nano"
+  instance_type          = "t3.micro"
   key_name               = var.ssh_key_name
   vpc_security_group_ids = [aws_security_group.app.id]
   tags                   = { Name = "scenario-lab" }
