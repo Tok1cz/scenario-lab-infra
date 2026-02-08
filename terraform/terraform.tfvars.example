@@ -1,0 +1,4 @@
+aws_region   = ""
+ami_id       = ""
+ssh_key_name = ""
+admin_ip     = "/32"

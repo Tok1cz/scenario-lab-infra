@@ -1,0 +1,20 @@
+- name: Install Docker
+  apt:
+    name: [docker.io, docker-compose-plugin]
+    state: present
+    update_cache: true
+
+- name: Log into GHCR
+  community.docker.docker_login:
+    registry: ghcr.io
+    username: "{{ ghcr_user }}"
+    password: "{{ ghcr_token }}"
+
+- name: Run backend container
+  community.docker.docker_container:
+    name: scenario-lab-api
+    image: "ghcr.io/{{ ghcr_user }}/scenario-lab-api:{{ image_tag | default('latest') }}"
+    pull: true
+    restart_policy: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
