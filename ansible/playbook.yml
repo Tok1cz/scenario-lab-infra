@@ -3,5 +3,7 @@
   vars_files:
     - group_vars/all.yml
   roles:
-    - docker
-    - nginx
+    - role: docker
+      tags: docker
+    - role: nginx
+      tags: nginx

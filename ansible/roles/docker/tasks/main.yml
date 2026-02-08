@@ -1,30 +1,45 @@
-- name: Add Docker GPG key
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
-
-- name: Add Docker repository
-  apt_repository:
-    repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-    state: present
-
-- name: Install Docker
+- name: Install prerequisites
   apt:
-    name: [docker.io, docker-compose-plugin]
+    name: [ca-certificates, curl, gnupg]
     state: present
     update_cache: true
 
-- name: Log into GHCR
-  community.docker.docker_login:
-    registry: ghcr.io
-    username: "{{ ghcr_user }}"
-    password: "{{ ghcr_token }}"
+- name: Add Docker GPG key
+  shell: |
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+  args:
+    creates: /etc/apt/keyrings/docker.asc
 
-- name: Run backend container
-  community.docker.docker_container:
-    name: scenario-lab-api
-    image: "ghcr.io/{{ ghcr_user }}/scenario-lab-api:{{ image_tag | default('latest') }}"
-    pull: true
-    restart_policy: unless-stopped
-    ports:
-      - "127.0.0.1:8080:8080"
+- name: Add Docker repository
+  shell: |
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
+      > /etc/apt/sources.list.d/docker.list
+  args:
+    creates: /etc/apt/sources.list.d/docker.list
+
+- name: Install Docker
+  apt:
+    name: [docker-ce, docker-ce-cli, containerd.io]
+    state: present
+    update_cache: true
+
+- name: Start and enable Docker
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Log into GHCR
+  shell: echo "{{ ghcr_token }}" | docker login ghcr.io -u "{{ ghcr_user }}" --password-stdin
+
+- name: Pull and run backend container
+  shell: |
+    docker pull ghcr.io/{{ ghcr_user }}/scenario-lab-api:{{ image_tag | default('latest') }}
+    docker rm -f scenario-lab-api || true
+    docker run -d \
+      --name scenario-lab-api \
+      --restart unless-stopped \
+      -p 127.0.0.1:8080:8080 \
+      ghcr.io/{{ ghcr_user }}/scenario-lab-api:{{ image_tag | default('latest') }}
