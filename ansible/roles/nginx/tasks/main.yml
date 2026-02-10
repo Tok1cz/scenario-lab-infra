@@ -26,17 +26,7 @@
         dest: /tmp/frontend-dist.tar.gz
 
     - name: Clear old frontend files
-      file:
-        path: /var/www/scenario-lab
-        state: absent
-
-    - name: Recreate frontend directory
-      file:
-        path: /var/www/scenario-lab
-        state: directory
-        owner: ubuntu
-        group: ubuntu
-        mode: "0755"
+      shell: rm -rf /var/www/scenario-lab/*
 
     - name: Extract frontend build
       unarchive:
