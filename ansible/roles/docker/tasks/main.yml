@@ -12,24 +12,21 @@
   args:
     creates: /etc/apt/keyrings/docker.asc
 
-- name: Remove conflicting Docker source files
-  file:
-    path: "{{ item }}"
+- name: Remove conflicting Docker sources
+  apt_repository:
+    repo: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
     state: absent
-  loop:
-    - /etc/apt/sources.list.d/docker.sources
-    - /etc/apt/sources.list.d/docker.list
 
 - name: Add Docker repository
-  shell: |
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" \
-      > /etc/apt/sources.list.d/docker.list
+  apt_repository:
+    repo: "deb [arch={{ ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+    state: present
+    update_cache: true
 
 - name: Install Docker
   apt:
     name: [docker-ce, docker-ce-cli, containerd.io]
     state: present
-    update_cache: true
 
 - name: Start and enable Docker
   service:
