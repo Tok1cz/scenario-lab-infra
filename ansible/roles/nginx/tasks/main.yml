@@ -17,6 +17,40 @@
     group: ubuntu
     mode: "0755"
 
+- name: Deploy frontend build
+  when: frontend_tarball is defined
+  block:
+    - name: Copy frontend tarball to server
+      copy:
+        src: "{{ frontend_tarball }}"
+        dest: /tmp/frontend-dist.tar.gz
+
+    - name: Clear old frontend files
+      file:
+        path: /var/www/scenario-lab
+        state: absent
+
+    - name: Recreate frontend directory
+      file:
+        path: /var/www/scenario-lab
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+
+    - name: Extract frontend build
+      unarchive:
+        src: /tmp/frontend-dist.tar.gz
+        dest: /var/www/scenario-lab
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Clean up tarball
+      file:
+        path: /tmp/frontend-dist.tar.gz
+        state: absent
+
 - name: Deploy Nginx config
   template:
     src: nginx.conf.j2

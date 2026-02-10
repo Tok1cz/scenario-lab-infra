@@ -31,6 +31,16 @@ jobs:
             -u ubuntu \
             --extra-vars "image_tag=${{ github.event.client_payload.image_tag }} ghcr_user=${{ github.event.client_payload.ghcr_user }} ghcr_token=${{ secrets.GHCR_TOKEN }}"
 
+      - name: Download frontend artifact
+        if: github.event.action == 'deploy-frontend'
+        env:
+          GH_TOKEN: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+        run: |
+          gh release download "build-${{ github.event.client_payload.sha }}" \
+            --repo "${{ github.event.client_payload.repo }}" \
+            --pattern "frontend-dist.tar.gz" \
+            --dir /tmp
+
       - name: Deploy frontend
         if: github.event.action == 'deploy-frontend'
         run: |
@@ -38,4 +48,5 @@ jobs:
           ansible-playbook playbook.yml \
             -i "${{ secrets.SERVER_IP }}," \
             -u ubuntu \
-            --tags nginx
+            --tags nginx \
+            --extra-vars "frontend_tarball=/tmp/frontend-dist.tar.gz"
