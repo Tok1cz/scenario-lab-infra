@@ -34,7 +34,7 @@ jobs:
       - name: Download frontend artifact
         if: github.event.action == 'deploy-frontend'
         env:
-          GH_TOKEN: ${{ secrets.INFRA_DISPATCH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
         run: |
           gh release download "build-${{ github.event.client_payload.sha }}" \
             --repo "${{ github.event.client_payload.repo }}" \
