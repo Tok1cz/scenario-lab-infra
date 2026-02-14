@@ -62,8 +62,8 @@
 
 - name: Obtain TLS certificate
   command: >
-    certbot --nginx -d {{ domain }}
+    certbot --nginx {% for d in domain.split() %}-d {{ d }} {% endfor %}
     --non-interactive --agree-tos -m {{ admin_email }}
   args:
-    creates: /etc/letsencrypt/live/{{ domain }}
+    creates: /etc/letsencrypt/live/{{ domain.split()[0] }}
   ignore_errors: true # Allowing no TLS certificate for now.
