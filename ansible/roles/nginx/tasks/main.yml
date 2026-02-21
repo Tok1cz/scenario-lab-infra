@@ -41,10 +41,26 @@
         path: /tmp/frontend-dist.tar.gz
         state: absent
 
+- name: Obtain TLS certificate
+  command: >
+    certbot certonly --nginx
+    -d {{ domain }} -d www.{{ domain }}
+    --non-interactive --agree-tos -m {{ admin_email }}
+  args:
+    creates: /etc/letsencrypt/live/{{ domain }}/fullchain.pem
+  ignore_errors: true
+
+- name: Check if TLS certificate exists
+  stat:
+    path: /etc/letsencrypt/live/{{ domain }}/fullchain.pem
+  register: tls_cert
+
 - name: Deploy Nginx config
   template:
     src: nginx.conf.j2
     dest: /etc/nginx/sites-available/scenario-lab
+  vars:
+    ssl_enabled: "{{ tls_cert.stat.exists }}"
   notify: Reload Nginx
 
 - name: Remove default site
@@ -59,11 +75,3 @@
     dest: /etc/nginx/sites-enabled/scenario-lab
     state: link
   notify: Reload Nginx
-
-- name: Obtain TLS certificate
-  command: >
-    certbot --nginx {% for d in domain.split() %}-d {{ d }} {% endfor %}
-    --non-interactive --agree-tos -m {{ admin_email }}
-  args:
-    creates: /etc/letsencrypt/live/{{ domain.split()[0] }}
-  ignore_errors: true # Allowing no TLS certificate for now.
